@@ -6,7 +6,11 @@ import { Download, FolderOpen, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePainel } from "@/lib/painel-store";
 
-export function DataActions() {
+interface DataActionsProps {
+  compacto?: boolean;
+}
+
+export function DataActions({ compacto = false }: DataActionsProps) {
   const { exportarJson, importarJson, abrirEconectarArquivo, suportaSalvarDireto, nomeArquivo } =
     usePainel();
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -56,19 +60,19 @@ export function DataActions() {
   };
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className={compacto ? "flex w-full flex-col gap-2" : "flex flex-col items-end gap-1"}>
+      <div className={compacto ? "flex flex-col gap-2" : "flex flex-wrap items-center gap-2"}>
         {suportaSalvarDireto && (
-          <Button variant="outline" size="sm" onClick={handleConectarArquivo}>
+          <Button variant="outline" size="sm" className={compacto ? "w-full justify-start" : undefined} onClick={handleConectarArquivo}>
             <FolderOpen />
             Conectar arquivo
           </Button>
         )}
-        <Button variant="outline" size="sm" onClick={handleImportarClique}>
+        <Button variant="outline" size="sm" className={compacto ? "w-full justify-start" : undefined} onClick={handleImportarClique}>
           <Upload />
           Importar JSON
         </Button>
-        <Button size="sm" onClick={handleExportar}>
+        <Button size="sm" className={compacto ? "w-full justify-start" : undefined} onClick={handleExportar}>
           <Download />
           {nomeArquivo ? "Salvar" : "Exportar JSON"}
         </Button>

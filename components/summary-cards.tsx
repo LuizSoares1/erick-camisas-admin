@@ -15,8 +15,6 @@ export function SummaryCards() {
   const totalEntradas = dados.entradas.reduce((acc, e) => acc + e.valor, 0);
   const totalSaidas = dados.saidas.reduce((acc, s) => acc + s.valor, 0);
   const saldo = totalEntradas - totalSaidas;
-  const emProducao = dados.entradas.filter((e) => e.status === "em_producao").length;
-
   const cards = [
     {
       titulo: "Total em entradas",
@@ -33,15 +31,10 @@ export function SummaryCards() {
       valor: formatarMoeda(saldo),
       nota: saldo >= 0 ? "Entradas superam as saídas" : "Saídas superam as entradas",
     },
-    {
-      titulo: "Em produção",
-      valor: String(emProducao),
-      nota: "Pedidos em produção",
-    },
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       {cards.map((card) => (
         <Card key={card.titulo}>
           <CardHeader className="pb-2">

@@ -1,27 +1,108 @@
 "use client";
 
+import * as React from "react";
+
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
+  LayoutDashboard,
+  Menu,
   PanelLeftClose,
   PanelLeftOpen,
   Shirt,
 } from "lucide-react";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { DataActions } from "@/components/data-actions";
+import { ThemeToggle } from "@/components/theme-toggle";
+
 import { cn } from "@/lib/utils";
 
 interface AppSidebarProps {
-  abaAtiva: "entradas" | "saidas";
-  onMudarAba: (aba: "entradas" | "saidas") => void;
+  abaAtiva: "dashboard" | "entradas" | "saidas";
+  onMudarAba: (aba: "dashboard" | "entradas" | "saidas") => void;
   nomeArquivo: string | null;
   recolhida: boolean;
   onAlternar: () => void;
 }
 
 const itens = [
+  { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
   { id: "entradas" as const, label: "Entradas", icon: ArrowDownToLine },
   { id: "saidas" as const, label: "Saídas", icon: ArrowUpFromLine },
 ];
+
+interface MobileSidebarProps {
+  abaAtiva: AppSidebarProps["abaAtiva"];
+  onMudarAba: AppSidebarProps["onMudarAba"];
+}
+
+export function MobileSidebar({ abaAtiva, onMudarAba }: MobileSidebarProps) {
+  const [aberta, setAberta] = React.useState(false);
+
+  return (
+    <div className="md:hidden">
+      <Dialog open={aberta} onOpenChange={setAberta}>
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-input bg-background text-muted-foreground shadow-xs hover:bg-accent hover:text-accent-foreground"
+            aria-label="Abrir menu de navegação"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+        </DialogTrigger>
+        <DialogContent className="left-0 top-0 h-full max-h-none w-72 max-w-[85vw] translate-x-0 translate-y-0 rounded-none border-y-0 border-l-0 p-0 sm:rounded-none">
+          <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
+            <div className="flex h-14 items-center gap-2 border-b border-sidebar-border px-4">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+                <Shirt className="h-4 w-4" />
+              </div>
+              <DialogTitle className="text-sm text-sidebar-foreground">EA Produção</DialogTitle>
+            </div>
+            <nav className="flex flex-1 flex-col gap-1 p-3">
+              {itens.map((item) => {
+                const Icon = item.icon;
+                const ativo = abaAtiva === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      onMudarAba(item.id);
+                      setAberta(false);
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium",
+                      ativo
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </nav>
+            <div className="border-t border-sidebar-border p-3">
+              <div className="mb-3 border-b border-sidebar-border pb-3">
+                <ThemeToggle compacto />
+              </div>
+              <p className="mb-2 text-xs font-medium text-sidebar-foreground/60">Arquivo</p>
+              <DataActions compacto />
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 
 export function AppSidebar({
   abaAtiva,
