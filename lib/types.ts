@@ -1,4 +1,8 @@
-export type StatusProducao = "em_desenvolvimento" | "finalizado";
+export type StatusProducao =
+  | "falta_gabaritar"
+  | "gabaritado"
+  | "em_producao"
+  | "finalizado";
 
 export interface Entrada {
   id: string;

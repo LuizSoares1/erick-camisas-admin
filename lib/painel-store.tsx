@@ -6,6 +6,7 @@ import {
   Entrada,
   PainelData,
   Saida,
+  StatusProducao,
   criarPainelVazio,
   PAINEL_DATA_VERSAO,
 } from "@/lib/types";
@@ -47,6 +48,13 @@ function validarPainelData(json: unknown): json is PainelData {
   if (!json || typeof json !== "object") return false;
   const dados = json as Partial<PainelData>;
   return Array.isArray(dados.entradas) && Array.isArray(dados.saidas);
+}
+
+function migrarStatus(status: unknown): StatusProducao {
+  if (status === "finalizado") return "finalizado";
+  if (status === "gabaritado") return "gabaritado";
+  if (status === "em_producao") return "em_producao";
+  return "falta_gabaritar";
 }
 
 export function PainelProvider({ children }: { children: React.ReactNode }) {
@@ -172,7 +180,10 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
     setDados({
       versao: json.versao ?? PAINEL_DATA_VERSAO,
       atualizadoEm: json.atualizadoEm ?? new Date().toISOString(),
-      entradas: json.entradas,
+      entradas: json.entradas.map((entrada) => ({
+        ...entrada,
+        status: migrarStatus(entrada.status),
+      })),
       saidas: json.saidas,
     });
     setCarregado(true);

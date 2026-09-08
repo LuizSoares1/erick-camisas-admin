@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { MoreHorizontal } from "lucide-react";
+import { FileText, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -21,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { EntradaFormDialog } from "@/components/entrada-form-dialog";
 import { usePainel } from "@/lib/painel-store";
+import { abrirComprovante } from "@/lib/comprovante";
 
 function formatarMoeda(valor: number) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -81,8 +83,24 @@ export function EntradasTable() {
               <TableCell>{formatarData(entrada.dataEntrada)}</TableCell>
               <TableCell>{formatarData(entrada.previsaoEntrega)}</TableCell>
               <TableCell>
-                <Badge variant={entrada.status === "finalizado" ? "success" : "warning"}>
-                  {entrada.status === "finalizado" ? "Finalizado" : "Em desenvolvimento"}
+                <Badge
+                  variant={
+                    entrada.status === "gabaritado"
+                      ? "warning"
+                      : entrada.status === "em_producao"
+                        ? "info"
+                        : entrada.status === "finalizado"
+                          ? "success"
+                          : "secondary"
+                  }
+                >
+                  {entrada.status === "falta_gabaritar"
+                    ? "Falta gabaritar"
+                    : entrada.status === "gabaritado"
+                      ? "Gabaritado"
+                      : entrada.status === "em_producao"
+                        ? "Em produção"
+                        : "Finalizado"}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">{formatarMoeda(entrada.valor)}</TableCell>
@@ -101,12 +119,19 @@ export function EntradasTable() {
                         setEditando(entrada);
                       }}
                     >
+                      <Pencil />
                       Editar
                     </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => abrirComprovante(entrada)}>
+                      <FileText />
+                      Gerar comprovante
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       variant="destructive"
                       onClick={() => removerEntrada(entrada.id)}
                     >
+                      <Trash2 />
                       Excluir
                     </DropdownMenuItem>
                   </DropdownMenuContent>

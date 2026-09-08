@@ -39,7 +39,7 @@ const entradaVazia: FormularioEntrada = {
   placaGola: "",
   dataEntrada: new Date().toISOString().slice(0, 10),
   previsaoEntrega: "",
-  status: "em_desenvolvimento",
+  status: "falta_gabaritar",
   valor: 0,
 };
 
@@ -286,7 +286,9 @@ export function EntradaFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="em_desenvolvimento">Em desenvolvimento</SelectItem>
+                  <SelectItem value="falta_gabaritar">Falta gabaritar</SelectItem>
+                  <SelectItem value="gabaritado">Gabaritado</SelectItem>
+                  <SelectItem value="em_producao">Em produção</SelectItem>
                   <SelectItem value="finalizado">Finalizado</SelectItem>
                 </SelectContent>
               </Select>

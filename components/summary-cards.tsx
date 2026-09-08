@@ -15,9 +15,7 @@ export function SummaryCards() {
   const totalEntradas = dados.entradas.reduce((acc, e) => acc + e.valor, 0);
   const totalSaidas = dados.saidas.reduce((acc, s) => acc + s.valor, 0);
   const saldo = totalEntradas - totalSaidas;
-  const emDesenvolvimento = dados.entradas.filter(
-    (e) => e.status === "em_desenvolvimento"
-  ).length;
+  const emProducao = dados.entradas.filter((e) => e.status === "em_producao").length;
 
   const cards = [
     {
@@ -36,9 +34,9 @@ export function SummaryCards() {
       nota: saldo >= 0 ? "Entradas superam as saídas" : "Saídas superam as entradas",
     },
     {
-      titulo: "Em desenvolvimento",
-      valor: String(emDesenvolvimento),
-      nota: "Pedidos ainda não finalizados",
+      titulo: "Em produção",
+      valor: String(emProducao),
+      nota: "Pedidos em produção",
     },
   ];
 
