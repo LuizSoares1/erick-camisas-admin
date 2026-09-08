@@ -4,7 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { usePainel } from "@/lib/painel-store";
 
 function formatarMoeda(valor: number) {
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const [inteiro, centavos] = Math.abs(valor).toFixed(2).split(".");
+  const inteiroFormatado = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${valor < 0 ? "-" : ""}R$ ${inteiroFormatado},${centavos}`;
 }
 
 export function SummaryCards() {

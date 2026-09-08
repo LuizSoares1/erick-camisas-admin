@@ -53,9 +53,12 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
   const [dados, setDados] = React.useState<PainelData>(criarPainelVazio());
   const [carregado, setCarregado] = React.useState(false);
   const [nomeArquivo, setNomeArquivo] = React.useState<string | null>(null);
+  const [suportaSalvarDireto, setSuportaSalvarDireto] = React.useState(false);
   const fileHandleRef = React.useRef<FileSystemFileHandleLike | null>(null);
-  const suportaSalvarDireto =
-    typeof window !== "undefined" && "showSaveFilePicker" in window;
+
+  React.useEffect(() => {
+    setSuportaSalvarDireto("showOpenFilePicker" in window);
+  }, []);
 
   const persistir = React.useCallback(
     (mutador: (atual: PainelData) => PainelData) => {

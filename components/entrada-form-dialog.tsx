@@ -25,6 +25,7 @@ import {
 import { mascararCpfCnpj, validarCpfOuCnpj } from "@/lib/cpf-cnpj";
 import { usePainel } from "@/lib/painel-store";
 import { Entrada } from "@/lib/types";
+import { converterValorInput, formatarValorInput } from "@/lib/utils";
 
 type FormularioEntrada = Omit<Entrada, "id" | "criadoEm" | "atualizadoEm">;
 
@@ -71,6 +72,7 @@ export function EntradaFormDialog({
     [controlado, onOpenChange]
   );
   const [form, setForm] = React.useState<FormularioEntrada>(entradaVazia);
+  const [valorTexto, setValorTexto] = React.useState("");
   const [erroDocumento, setErroDocumento] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -92,6 +94,7 @@ export function EntradaFormDialog({
             }
           : entradaVazia
       );
+          setValorTexto(entradaExistente ? formatarValorInput(entradaExistente.valor) : "");
       setErroDocumento(null);
     }
   }, [aberto, entradaExistente]);
@@ -110,10 +113,14 @@ export function EntradaFormDialog({
       return;
     }
 
+    const valor = converterValorInput(valorTexto);
+    if (!Number.isFinite(valor) || valor < 0) return;
+    const dados = { ...form, valor };
+
     if (entradaExistente) {
-      atualizarEntrada(entradaExistente.id, form);
+      atualizarEntrada(entradaExistente.id, dados);
     } else {
-      adicionarEntrada(form);
+      adicionarEntrada(dados);
     }
     setAberto(false);
   };
@@ -229,12 +236,15 @@ export function EntradaFormDialog({
               <Label htmlFor="valor">Valor (R$)</Label>
               <Input
                 id="valor"
-                type="number"
-                min={0}
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 required
-                value={form.valor}
-                onChange={(e) => setForm((atual) => ({ ...atual, valor: Number(e.target.value) }))}
+                placeholder="0,00"
+                value={valorTexto}
+                onFocus={(e) => e.currentTarget.select()}
+                onChange={(e) =>
+                  setValorTexto(e.target.value.replace(/[^\d,]/g, ""))
+                }
               />
             </div>
 

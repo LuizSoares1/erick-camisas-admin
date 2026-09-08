@@ -22,7 +22,7 @@ export function AppSidebar({ abaAtiva, onMudarAba, nomeArquivo }: AppSidebarProp
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
           <Shirt className="h-4 w-4" />
         </div>
-        <span className="text-sm font-semibold">Controle de Produção</span>
+        <span className="text-sm font-semibold">EA Produção</span>
       </div>
 
       <nav className="flex flex-1 flex-col gap-1 p-2">

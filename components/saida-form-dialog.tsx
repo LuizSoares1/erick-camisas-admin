@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { usePainel } from "@/lib/painel-store";
 import { Saida } from "@/lib/types";
+import { converterValorInput, formatarValorInput } from "@/lib/utils";
 
 type FormularioSaida = Omit<Saida, "id" | "criadoEm" | "atualizadoEm">;
 
@@ -54,6 +55,7 @@ export function SaidaFormDialog({
     [controlado, onOpenChange]
   );
   const [form, setForm] = React.useState<FormularioSaida>(saidaVazia);
+  const [valorTexto, setValorTexto] = React.useState("");
 
   React.useEffect(() => {
     if (aberto) {
@@ -62,15 +64,19 @@ export function SaidaFormDialog({
           ? { produto: saidaExistente.produto, data: saidaExistente.data, valor: saidaExistente.valor }
           : saidaVazia
       );
+      setValorTexto(saidaExistente ? formatarValorInput(saidaExistente.valor) : "");
     }
   }, [aberto, saidaExistente]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
+    const valor = converterValorInput(valorTexto);
+    if (!Number.isFinite(valor) || valor < 0) return;
+    const dados = { ...form, valor };
     if (saidaExistente) {
-      atualizarSaida(saidaExistente.id, form);
+      atualizarSaida(saidaExistente.id, dados);
     } else {
-      adicionarSaida(form);
+      adicionarSaida(dados);
     }
     setAberto(false);
   };
@@ -122,12 +128,15 @@ export function SaidaFormDialog({
             <Label htmlFor="valorSaida">Valor (R$)</Label>
             <Input
               id="valorSaida"
-              type="number"
-              min={0}
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               required
-              value={form.valor}
-              onChange={(e) => setForm((atual) => ({ ...atual, valor: Number(e.target.value) }))}
+              placeholder="0,00"
+              value={valorTexto}
+              onFocus={(e) => e.currentTarget.select()}
+              onChange={(e) =>
+                setValorTexto(e.target.value.replace(/[^\d,]/g, ""))
+              }
             />
           </div>
 
