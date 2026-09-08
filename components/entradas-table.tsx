@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/dialog";
 import { usePainel } from "@/lib/painel-store";
 import { abrirComprovante } from "@/lib/comprovante";
-import { StatusProducao } from "@/lib/types";
+import { Entrada, StatusProducao } from "@/lib/types";
 
 function formatarMoeda(valor: number) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

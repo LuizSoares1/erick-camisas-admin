@@ -228,7 +228,6 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
         ...entrada,
         observacoes: entrada.observacoes ?? "",
         status: migrarStatus(entrada.status),
-          observacoes: entrada.observacoes ?? "",
       })),
       saidas: json.saidas,
     });
