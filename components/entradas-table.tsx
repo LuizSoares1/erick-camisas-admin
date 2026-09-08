@@ -83,7 +83,8 @@ export function EntradasTable() {
   const [dataEntrada, setDataEntrada] = React.useState("");
   const [pagina, setPagina] = React.useState(1);
 
-  const entradasFiltradas = dados.entradas.filter((entrada) => {
+  const entradasFiltradas = dados.entradas
+    .filter((entrada) => {
     const textoBusca = normalizarTexto(busca.trim());
     const textoEntrada = normalizarTexto(
       [
@@ -97,12 +98,13 @@ export function EntradasTable() {
       ].join(" ")
     );
 
-    return (
-      (!textoBusca || textoEntrada.includes(textoBusca)) &&
-      (filtroStatus === "todos" || entrada.status === filtroStatus) &&
-      (!dataEntrada || entrada.dataEntrada === dataEntrada)
-    );
-  });
+      return (
+        (!textoBusca || textoEntrada.includes(textoBusca)) &&
+        (filtroStatus === "todos" || entrada.status === filtroStatus) &&
+        (!dataEntrada || entrada.dataEntrada === dataEntrada)
+      );
+    })
+    .sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
   const totalPaginas = Math.max(1, Math.ceil(entradasFiltradas.length / ITENS_POR_PAGINA));
   const entradasVisiveis = entradasFiltradas.slice(
     (pagina - 1) * ITENS_POR_PAGINA,

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal, Search, X } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -19,6 +19,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
 import { SaidaFormDialog } from "@/components/saida-form-dialog";
 import { usePainel } from "@/lib/painel-store";
 
@@ -34,18 +36,40 @@ function formatarData(iso: string) {
 
 const ITENS_POR_PAGINA = 10;
 
+function normalizarTexto(valor: string) {
+  return valor
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 export function SaidasTable() {
   const { dados, removerSaida } = usePainel();
   const [editando, setEditando] = React.useState<null | (typeof dados.saidas)[number]>(
     null
   );
+  const [busca, setBusca] = React.useState("");
+  const [dataSaida, setDataSaida] = React.useState("");
   const [pagina, setPagina] = React.useState(1);
-  const totalPaginas = Math.max(1, Math.ceil(dados.saidas.length / ITENS_POR_PAGINA));
-  const saidasVisiveis = dados.saidas.slice(
+  const saidasFiltradas = dados.saidas
+    .filter((saida) => {
+    const textoBusca = normalizarTexto(busca.trim());
+      return (
+        (!textoBusca || normalizarTexto(saida.produto).includes(textoBusca)) &&
+        (!dataSaida || saida.data === dataSaida)
+      );
+    })
+    .sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
+  const totalPaginas = Math.max(1, Math.ceil(saidasFiltradas.length / ITENS_POR_PAGINA));
+  const saidasVisiveis = saidasFiltradas.slice(
     (pagina - 1) * ITENS_POR_PAGINA,
     pagina * ITENS_POR_PAGINA
   );
   const linhasVazias = Math.max(0, ITENS_POR_PAGINA - saidasVisiveis.length);
+
+  React.useEffect(() => {
+    setPagina(1);
+  }, [busca, dataSaida]);
 
   React.useEffect(() => {
     if (pagina > totalPaginas) setPagina(totalPaginas);
@@ -63,6 +87,50 @@ export function SaidasTable() {
   }
 
   return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            placeholder="Buscar por produto..."
+            className="pl-9"
+            aria-label="Buscar saídas"
+          />
+        </div>
+        <DatePicker
+          id="filtroDataSaida"
+          value={dataSaida}
+          onChange={setDataSaida}
+          placeholder="Data da saída"
+          className="w-full sm:w-44"
+        />
+        {(busca || dataSaida) && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setBusca("");
+              setDataSaida("");
+            }}
+            aria-label="Limpar busca e filtro"
+            title="Limpar busca e filtro"
+          >
+            <X />
+          </Button>
+        )}
+      </div>
+
+      {saidasFiltradas.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed py-16 text-center">
+          <p className="text-sm font-medium">Nenhuma saída encontrada</p>
+          <p className="text-xs text-muted-foreground">
+            Tente ajustar a busca ou a data selecionada.
+          </p>
+        </div>
+      ) : (
     <div className="rounded-lg border">
       <div className="hidden md:block">
       <Table key={`saidas-pagina-${pagina}`}>
@@ -189,6 +257,8 @@ export function SaidasTable() {
             if (!aberto) setEditando(null);
           }}
         />
+      )}
+    </div>
       )}
     </div>
   );
