@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import { usePainel } from "@/lib/painel-store";
 import { Saida } from "@/lib/types";
 import { converterValorInput, formatarValorInput } from "@/lib/utils";
@@ -115,12 +116,12 @@ export function SaidaFormDialog({
 
           <div className="grid gap-1.5">
             <Label htmlFor="dataSaida">Data</Label>
-            <Input
+            <DatePicker
               id="dataSaida"
-              type="date"
               required
               value={form.data}
-              onChange={(e) => setForm((atual) => ({ ...atual, data: e.target.value }))}
+              onChange={(valor) => setForm((atual) => ({ ...atual, data: valor }))}
+              placeholder="Selecione a data"
             />
           </div>
 

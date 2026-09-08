@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -250,27 +251,27 @@ export function EntradaFormDialog({
 
             <div className="grid gap-1.5">
               <Label htmlFor="dataEntrada">Data de entrada</Label>
-              <Input
+              <DatePicker
                 id="dataEntrada"
-                type="date"
                 required
                 value={form.dataEntrada}
-                onChange={(e) =>
-                  setForm((atual) => ({ ...atual, dataEntrada: e.target.value }))
+                onChange={(valor) =>
+                  setForm((atual) => ({ ...atual, dataEntrada: valor }))
                 }
+                placeholder="Selecione a data de entrada"
               />
             </div>
 
             <div className="grid gap-1.5">
               <Label htmlFor="previsaoEntrega">Previsão de entrega</Label>
-              <Input
+              <DatePicker
                 id="previsaoEntrega"
-                type="date"
                 required
                 value={form.previsaoEntrega}
-                onChange={(e) =>
-                  setForm((atual) => ({ ...atual, previsaoEntrega: e.target.value }))
+                onChange={(valor) =>
+                  setForm((atual) => ({ ...atual, previsaoEntrega: valor }))
                 }
+                placeholder="Selecione a previsão"
               />
             </div>
 

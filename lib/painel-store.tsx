@@ -36,6 +36,7 @@ interface PainelContextValue {
 }
 
 const PainelContext = React.createContext<PainelContextValue | null>(null);
+const CHAVE_PERSISTENCIA = "painel-administrativo-dados";
 
 function gerarId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -67,6 +68,48 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     setSuportaSalvarDireto("showOpenFilePicker" in window);
   }, []);
+
+  React.useEffect(() => {
+    try {
+      const salvo = window.localStorage.getItem(CHAVE_PERSISTENCIA);
+      if (!salvo) return;
+
+      const estado = JSON.parse(salvo) as {
+        dados?: unknown;
+        nomeArquivo?: unknown;
+      };
+      if (!validarPainelData(estado.dados)) return;
+
+      setDados({
+        versao: estado.dados.versao ?? PAINEL_DATA_VERSAO,
+        atualizadoEm: estado.dados.atualizadoEm ?? new Date().toISOString(),
+        entradas: estado.dados.entradas.map((entrada) => ({
+          ...entrada,
+          status: migrarStatus(entrada.status),
+        })),
+        saidas: estado.dados.saidas,
+      });
+      setCarregado(true);
+      if (typeof estado.nomeArquivo === "string") {
+        setNomeArquivo(estado.nomeArquivo);
+      }
+    } catch {
+      window.localStorage.removeItem(CHAVE_PERSISTENCIA);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (!carregado) return;
+
+    try {
+      window.localStorage.setItem(
+        CHAVE_PERSISTENCIA,
+        JSON.stringify({ dados, nomeArquivo })
+      );
+    } catch {
+      // O armazenamento pode estar bloqueado ou indisponível no navegador.
+    }
+  }, [carregado, dados, nomeArquivo]);
 
   const persistir = React.useCallback(
     (mutador: (atual: PainelData) => PainelData) => {

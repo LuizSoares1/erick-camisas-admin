@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MoreHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -31,11 +31,24 @@ function formatarData(iso: string) {
   return `${dia}/${mes}/${ano}`;
 }
 
+const ITENS_POR_PAGINA = 10;
+
 export function SaidasTable() {
   const { dados, removerSaida } = usePainel();
   const [editando, setEditando] = React.useState<null | (typeof dados.saidas)[number]>(
     null
   );
+  const [pagina, setPagina] = React.useState(1);
+  const totalPaginas = Math.max(1, Math.ceil(dados.saidas.length / ITENS_POR_PAGINA));
+  const saidasVisiveis = dados.saidas.slice(
+    (pagina - 1) * ITENS_POR_PAGINA,
+    pagina * ITENS_POR_PAGINA
+  );
+  const linhasVazias = Math.max(0, ITENS_POR_PAGINA - saidasVisiveis.length);
+
+  React.useEffect(() => {
+    if (pagina > totalPaginas) setPagina(totalPaginas);
+  }, [pagina, totalPaginas]);
 
   if (dados.saidas.length === 0) {
     return (
@@ -50,7 +63,7 @@ export function SaidasTable() {
 
   return (
     <div className="rounded-lg border">
-      <Table>
+      <Table key={`saidas-pagina-${pagina}`}>
         <TableHeader>
           <TableRow>
             <TableHead>Produto</TableHead>
@@ -60,7 +73,7 @@ export function SaidasTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {dados.saidas.map((saida) => (
+          {saidasVisiveis.map((saida) => (
             <TableRow key={saida.id}>
               <TableCell className="font-medium">{saida.produto}</TableCell>
               <TableCell>{formatarData(saida.data)}</TableCell>
@@ -93,8 +106,45 @@ export function SaidasTable() {
               </TableCell>
             </TableRow>
           ))}
+          {Array.from({ length: linhasVazias }, (_, indice) => (
+            <TableRow key={`linha-vazia-${indice}`} aria-hidden="true">
+              <TableCell colSpan={4} className="h-12 p-0" />
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
+
+      {totalPaginas > 1 && (
+        <div className="flex items-center justify-between border-t px-3 py-3">
+          <p className="text-xs text-muted-foreground">
+            Página {pagina} de {totalPaginas}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setPagina((atual) => Math.max(1, atual - 1))}
+              disabled={pagina === 1}
+              aria-label="Página anterior"
+              title="Página anterior"
+            >
+              <ChevronLeft />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setPagina((atual) => Math.min(totalPaginas, atual + 1))}
+              disabled={pagina === totalPaginas}
+              aria-label="Próxima página"
+              title="Próxima página"
+            >
+              <ChevronRight />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {editando && (
         <SaidaFormDialog

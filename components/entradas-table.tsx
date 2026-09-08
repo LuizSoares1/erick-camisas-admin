@@ -1,7 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { FileText, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  MoreHorizontal,
+  Pencil,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,9 +29,19 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EntradaFormDialog } from "@/components/entrada-form-dialog";
 import { usePainel } from "@/lib/painel-store";
 import { abrirComprovante } from "@/lib/comprovante";
+import { StatusProducao } from "@/lib/types";
 
 function formatarMoeda(valor: number) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -34,11 +53,69 @@ function formatarData(iso: string) {
   return `${dia}/${mes}/${ano}`;
 }
 
+function normalizarTexto(valor: string) {
+  return valor
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function rotuloStatus(status: StatusProducao) {
+  return status === "falta_gabaritar"
+    ? "Falta gabaritar"
+    : status === "gabaritado"
+      ? "Gabaritado"
+      : status === "em_producao"
+        ? "Em produção"
+        : "Finalizado";
+}
+
+const ITENS_POR_PAGINA = 10;
+
 export function EntradasTable() {
   const { dados, removerEntrada } = usePainel();
   const [editando, setEditando] = React.useState<null | (typeof dados.entradas)[number]>(
     null
   );
+  const [busca, setBusca] = React.useState("");
+  const [filtroStatus, setFiltroStatus] = React.useState<StatusProducao | "todos">("todos");
+  const [dataEntrada, setDataEntrada] = React.useState("");
+  const [pagina, setPagina] = React.useState(1);
+
+  const entradasFiltradas = dados.entradas.filter((entrada) => {
+    const textoBusca = normalizarTexto(busca.trim());
+    const textoEntrada = normalizarTexto(
+      [
+        entrada.clienteNome,
+        entrada.documento,
+        entrada.produto,
+        entrada.tecido,
+        entrada.modelo,
+        entrada.placaGola,
+        rotuloStatus(entrada.status),
+      ].join(" ")
+    );
+
+    return (
+      (!textoBusca || textoEntrada.includes(textoBusca)) &&
+      (filtroStatus === "todos" || entrada.status === filtroStatus) &&
+      (!dataEntrada || entrada.dataEntrada === dataEntrada)
+    );
+  });
+  const totalPaginas = Math.max(1, Math.ceil(entradasFiltradas.length / ITENS_POR_PAGINA));
+  const entradasVisiveis = entradasFiltradas.slice(
+    (pagina - 1) * ITENS_POR_PAGINA,
+    pagina * ITENS_POR_PAGINA
+  );
+  const linhasVazias = Math.max(0, ITENS_POR_PAGINA - entradasVisiveis.length);
+
+  React.useEffect(() => {
+    setPagina(1);
+  }, [busca, filtroStatus, dataEntrada]);
+
+  React.useEffect(() => {
+    if (pagina > totalPaginas) setPagina(totalPaginas);
+  }, [pagina, totalPaginas]);
 
   if (dados.entradas.length === 0) {
     return (
@@ -52,8 +129,68 @@ export function EntradasTable() {
   }
 
   return (
-    <div className="rounded-lg border">
-      <Table>
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:flex-wrap sm:items-center">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={busca}
+            onChange={(event) => setBusca(event.target.value)}
+            placeholder="Buscar cliente, produto ou documento..."
+            className="pl-9"
+            aria-label="Buscar entradas"
+          />
+        </div>
+        <Select
+          value={filtroStatus}
+          onValueChange={(valor: StatusProducao | "todos") => setFiltroStatus(valor)}
+        >
+          <SelectTrigger className="w-full sm:w-48" aria-label="Filtrar por status">
+            <SelectValue placeholder="Todos os status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os status</SelectItem>
+            <SelectItem value="falta_gabaritar">Falta gabaritar</SelectItem>
+            <SelectItem value="gabaritado">Gabaritado</SelectItem>
+            <SelectItem value="em_producao">Em produção</SelectItem>
+            <SelectItem value="finalizado">Finalizado</SelectItem>
+          </SelectContent>
+        </Select>
+        <DatePicker
+          id="filtroDataEntrada"
+          value={dataEntrada}
+          onChange={setDataEntrada}
+          placeholder="Data de entrada"
+          className="w-full sm:w-44"
+        />
+        {(busca || filtroStatus !== "todos" || dataEntrada) && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setBusca("");
+              setFiltroStatus("todos");
+              setDataEntrada("");
+            }}
+            aria-label="Limpar busca e filtro"
+            title="Limpar busca e filtro"
+          >
+            <X />
+          </Button>
+        )}
+      </div>
+
+      {entradasFiltradas.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed py-16 text-center">
+          <p className="text-sm font-medium">Nenhuma entrada encontrada</p>
+          <p className="text-xs text-muted-foreground">
+            Tente ajustar a busca ou selecionar outro status.
+          </p>
+        </div>
+      ) : (
+      <div className="rounded-lg border">
+      <Table key={`entradas-pagina-${pagina}`}>
         <TableHeader>
           <TableRow>
             <TableHead>Cliente/Empresa</TableHead>
@@ -71,7 +208,7 @@ export function EntradasTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {dados.entradas.map((entrada) => (
+          {entradasVisiveis.map((entrada) => (
             <TableRow key={entrada.id}>
               <TableCell className="font-medium">{entrada.clienteNome}</TableCell>
               <TableCell>{entrada.documento}</TableCell>
@@ -94,13 +231,7 @@ export function EntradasTable() {
                           : "secondary"
                   }
                 >
-                  {entrada.status === "falta_gabaritar"
-                    ? "Falta gabaritar"
-                    : entrada.status === "gabaritado"
-                      ? "Gabaritado"
-                      : entrada.status === "em_producao"
-                        ? "Em produção"
-                        : "Finalizado"}
+                  {rotuloStatus(entrada.status)}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">{formatarMoeda(entrada.valor)}</TableCell>
@@ -139,8 +270,45 @@ export function EntradasTable() {
               </TableCell>
             </TableRow>
           ))}
+          {Array.from({ length: linhasVazias }, (_, indice) => (
+            <TableRow key={`linha-vazia-${indice}`} aria-hidden="true">
+              <TableCell colSpan={12} className="h-12 p-0" />
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
+
+      {totalPaginas > 1 && (
+        <div className="flex items-center justify-between border-t px-3 py-3">
+          <p className="text-xs text-muted-foreground">
+            Página {pagina} de {totalPaginas}
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setPagina((atual) => Math.max(1, atual - 1))}
+              disabled={pagina === 1}
+              aria-label="Página anterior"
+              title="Página anterior"
+            >
+              <ChevronLeft />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={() => setPagina((atual) => Math.min(totalPaginas, atual + 1))}
+              disabled={pagina === totalPaginas}
+              aria-label="Próxima página"
+              title="Próxima página"
+            >
+              <ChevronRight />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {editando && (
         <EntradaFormDialog
@@ -150,6 +318,8 @@ export function EntradasTable() {
             if (!aberto) setEditando(null);
           }}
         />
+      )}
+      </div>
       )}
     </div>
   );
