@@ -13,11 +13,18 @@ import { PainelProvider, usePainel } from "@/lib/painel-store";
 
 function PainelConteudo() {
   const [aba, setAba] = React.useState<"entradas" | "saidas">("entradas");
+  const [sidebarRecolhida, setSidebarRecolhida] = React.useState(false);
   const { nomeArquivo } = usePainel();
 
   return (
     <div className="flex min-h-screen w-full">
-      <AppSidebar abaAtiva={aba} onMudarAba={setAba} nomeArquivo={nomeArquivo} />
+      <AppSidebar
+        abaAtiva={aba}
+        onMudarAba={setAba}
+        nomeArquivo={nomeArquivo}
+        recolhida={sidebarRecolhida}
+        onAlternar={() => setSidebarRecolhida((atual) => !atual)}
+      />
 
       <div className="flex flex-1 flex-col">
         <header className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">

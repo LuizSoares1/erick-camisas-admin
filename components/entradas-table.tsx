@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -190,6 +191,7 @@ export function EntradasTable() {
         </div>
       ) : (
       <div className="rounded-lg border">
+      <div className="hidden md:block">
       <Table key={`entradas-pagina-${pagina}`}>
         <TableHeader>
           <TableRow>
@@ -277,6 +279,75 @@ export function EntradasTable() {
           ))}
         </TableBody>
       </Table>
+      </div>
+
+      <div key={`entradas-mobile-pagina-${pagina}`} className="space-y-3 p-3 md:hidden">
+        {entradasVisiveis.map((entrada) => (
+          <Card key={`mobile-${entrada.id}`} className="shadow-none">
+            <CardHeader className="flex flex-row items-start justify-between gap-3 p-4 pb-3">
+              <div className="min-w-0">
+                <p className="truncate font-semibold">{entrada.clienteNome}</p>
+                <p className="truncate text-xs text-muted-foreground">{entrada.documento}</p>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="-mr-2 -mt-2 h-8 w-8 shrink-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">Abrir menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setEditando(entrada); }}>
+                    <Pencil />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => abrirComprovante(entrada)}>
+                    <FileText />
+                    Gerar comprovante
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem variant="destructive" onClick={() => removerEntrada(entrada.id)}>
+                    <Trash2 />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-x-4 gap-y-3 p-4 pt-0 text-sm">
+              <div className="col-span-2 min-w-0">
+                <p className="text-xs text-muted-foreground">Produto</p>
+                <p className="truncate font-medium">{entrada.produto}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Status</p>
+                <Badge variant={entrada.status === "gabaritado" ? "warning" : entrada.status === "em_producao" ? "info" : entrada.status === "finalizado" ? "success" : "secondary"}>
+                  {rotuloStatus(entrada.status)}
+                </Badge>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Valor</p>
+                <p className="font-semibold">{formatarMoeda(entrada.valor)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Quantidade</p>
+                <p>{entrada.quantidade}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Entrada</p>
+                <p>{formatarData(entrada.dataEntrada)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Previsão</p>
+                <p>{formatarData(entrada.previsaoEntrega)}</p>
+              </div>
+              <div className="min-w-0 text-right">
+                <p className="text-xs text-muted-foreground">Modelo / tecido</p>
+                <p className="truncate">{entrada.modelo} / {entrada.tecido}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {totalPaginas > 1 && (
         <div className="flex items-center justify-between border-t px-3 py-3">

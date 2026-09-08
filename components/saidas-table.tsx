@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +64,7 @@ export function SaidasTable() {
 
   return (
     <div className="rounded-lg border">
+      <div className="hidden md:block">
       <Table key={`saidas-pagina-${pagina}`}>
         <TableHeader>
           <TableRow>
@@ -113,6 +115,39 @@ export function SaidasTable() {
           ))}
         </TableBody>
       </Table>
+      </div>
+
+      <div key={`saidas-mobile-pagina-${pagina}`} className="space-y-3 p-3 md:hidden">
+        {saidasVisiveis.map((saida) => (
+          <Card key={`mobile-${saida.id}`} className="shadow-none">
+            <CardContent className="flex items-center justify-between gap-3 p-4">
+              <div className="min-w-0">
+                <p className="truncate font-semibold">{saida.produto}</p>
+                <p className="text-xs text-muted-foreground">{formatarData(saida.data)}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <p className="font-semibold">{formatarMoeda(saida.valor)}</p>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span className="sr-only">Abrir menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setEditando(saida); }}>
+                      Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem variant="destructive" onClick={() => removerSaida(saida.id)}>
+                      Excluir
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {totalPaginas > 1 && (
         <div className="flex items-center justify-between border-t px-3 py-3">
