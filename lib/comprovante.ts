@@ -73,6 +73,7 @@ export function abrirComprovante(entrada: Entrada) {
         <div><dt>Tecido</dt><dd>${escaparHtml(entrada.tecido)}</dd></div>
         <div><dt>Modelo</dt><dd>${escaparHtml(entrada.modelo)}</dd></div>
         <div><dt>Placa de gola</dt><dd>${escaparHtml(entrada.placaGola || "Não informado")}</dd></div>
+        <div><dt>Observações</dt><dd>${escaparHtml(entrada.observacoes || "Não informado")}</dd></div>
         <div><dt>Status</dt><dd>${status}</dd></div>
         <div><dt>Data de entrada</dt><dd>${formatarData(entrada.dataEntrada)}</dd></div>
         <div><dt>Previsão de entrega</dt><dd>${formatarData(entrada.previsaoEntrega)}</dd></div>

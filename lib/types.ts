@@ -13,6 +13,7 @@ export interface Entrada {
   tecido: string;
   modelo: string;
   placaGola: string;
+  observacoes: string;
   dataEntrada: string; // ISO yyyy-mm-dd
   previsaoEntrega: string; // ISO yyyy-mm-dd
   status: StatusProducao;

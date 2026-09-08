@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  MessageSquareText,
   MoreHorizontal,
   Pencil,
   Search,
@@ -40,6 +41,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EntradaFormDialog } from "@/components/entrada-form-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { usePainel } from "@/lib/painel-store";
 import { abrirComprovante } from "@/lib/comprovante";
 import { StatusProducao } from "@/lib/types";
@@ -74,7 +83,7 @@ function rotuloStatus(status: StatusProducao) {
 const ITENS_POR_PAGINA = 10;
 
 export function EntradasTable() {
-  const { dados, removerEntrada } = usePainel();
+  const { dados, removerEntrada, atualizarEntrada } = usePainel();
   const [editando, setEditando] = React.useState<null | (typeof dados.entradas)[number]>(
     null
   );
@@ -82,6 +91,19 @@ export function EntradasTable() {
   const [filtroStatus, setFiltroStatus] = React.useState<StatusProducao | "todos">("todos");
   const [dataEntrada, setDataEntrada] = React.useState("");
   const [pagina, setPagina] = React.useState(1);
+  const [anotando, setAnotando] = React.useState<Entrada | null>(null);
+  const [observacoesTexto, setObservacoesTexto] = React.useState("");
+
+  React.useEffect(() => {
+    setObservacoesTexto(anotando?.observacoes ?? "");
+  }, [anotando]);
+
+  const salvarObservacoes = () => {
+    if (!anotando) return;
+    const { id, criadoEm, atualizadoEm, ...dadosEntrada } = anotando;
+    atualizarEntrada(id, { ...dadosEntrada, observacoes: observacoesTexto });
+    setAnotando(null);
+  };
 
   const entradasFiltradas = dados.entradas
     .filter((entrada) => {
@@ -94,6 +116,7 @@ export function EntradasTable() {
         entrada.tecido,
         entrada.modelo,
         entrada.placaGola,
+        entrada.observacoes,
         rotuloStatus(entrada.status),
       ].join(" ")
     );
@@ -257,6 +280,10 @@ export function EntradasTable() {
                       <Pencil />
                       Editar
                     </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setAnotando(entrada); }}>
+                      <MessageSquareText />
+                      Observações
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => abrirComprovante(entrada)}>
                       <FileText />
                       Gerar comprovante
@@ -276,7 +303,7 @@ export function EntradasTable() {
           ))}
           {Array.from({ length: linhasVazias }, (_, indice) => (
             <TableRow key={`linha-vazia-${indice}`} aria-hidden="true">
-              <TableCell colSpan={12} className="h-12 p-0" />
+                  <TableCell colSpan={12} className="h-12 p-0" />
             </TableRow>
           ))}
         </TableBody>
@@ -302,6 +329,10 @@ export function EntradasTable() {
                   <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setEditando(entrada); }}>
                     <Pencil />
                     Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setAnotando(entrada); }}>
+                    <MessageSquareText />
+                    Observações
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => abrirComprovante(entrada)}>
                     <FileText />
@@ -392,6 +423,32 @@ export function EntradasTable() {
           }}
         />
       )}
+      <Dialog open={Boolean(anotando)} onOpenChange={(aberto) => !aberto && setAnotando(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Observações do pedido</DialogTitle>
+            <DialogDescription>
+              {anotando?.clienteNome} · {anotando?.produto}
+            </DialogDescription>
+          </DialogHeader>
+          <textarea
+            value={observacoesTexto}
+            onChange={(event) => setObservacoesTexto(event.target.value)}
+            placeholder="Adicione uma observação para este pedido..."
+            rows={6}
+            autoFocus
+            className="flex h-32 w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+          />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setAnotando(null)}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={salvarObservacoes}>
+              Salvar observações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       </div>
       )}
     </div>

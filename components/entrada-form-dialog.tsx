@@ -28,7 +28,7 @@ import { usePainel } from "@/lib/painel-store";
 import { Entrada } from "@/lib/types";
 import { converterValorInput, formatarValorInput } from "@/lib/utils";
 
-type FormularioEntrada = Omit<Entrada, "id" | "criadoEm" | "atualizadoEm">;
+type FormularioEntrada = Omit<Entrada, "id" | "criadoEm" | "atualizadoEm" | "observacoes">;
 
 const entradaVazia: FormularioEntrada = {
   clienteNome: "",
@@ -116,7 +116,11 @@ export function EntradaFormDialog({
 
     const valor = converterValorInput(valorTexto);
     if (!Number.isFinite(valor) || valor < 0) return;
-    const dados = { ...form, valor };
+    const dados = {
+      ...form,
+      valor,
+      observacoes: entradaExistente?.observacoes ?? "",
+    };
 
     if (entradaExistente) {
       atualizarEntrada(entradaExistente.id, dados);

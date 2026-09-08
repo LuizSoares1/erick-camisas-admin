@@ -85,6 +85,7 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
         atualizadoEm: estado.dados.atualizadoEm ?? new Date().toISOString(),
         entradas: estado.dados.entradas.map((entrada) => ({
           ...entrada,
+          observacoes: entrada.observacoes ?? "",
           status: migrarStatus(entrada.status),
         })),
         saidas: estado.dados.saidas,
@@ -225,7 +226,9 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
       atualizadoEm: json.atualizadoEm ?? new Date().toISOString(),
       entradas: json.entradas.map((entrada) => ({
         ...entrada,
+        observacoes: entrada.observacoes ?? "",
         status: migrarStatus(entrada.status),
+          observacoes: entrada.observacoes ?? "",
       })),
       saidas: json.saidas,
     });
