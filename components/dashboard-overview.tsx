@@ -12,18 +12,9 @@ import {
 } from "recharts";
 import { BarChart3 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SummaryCards } from "@/components/summary-cards";
 import { usePainel } from "@/lib/painel-store";
-import { StatusProducao } from "@/lib/types";
-
-const STATUS: Array<{ id: StatusProducao; label: string; color: string }> = [
-  { id: "falta_gabaritar", label: "Falta gabaritar", color: "#94a3b8" },
-  { id: "gabaritado", label: "Gabaritado", color: "#f59e0b" },
-  { id: "em_producao", label: "Em produção", color: "#3b82f6" },
-  { id: "finalizado", label: "Finalizado", color: "#22c55e" },
-];
 
 const PERIODOS = [
   { dias: 7, label: "Últimos 7 dias" },
@@ -41,6 +32,10 @@ function formatarDataLonga(data: string) {
   return `${dia}/${mes}/${ano}`;
 }
 
+function formatarMoeda(valor: number) {
+  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
 function adicionarDias(data: string, quantidade: number) {
   const atual = new Date(`${data}T12:00:00`);
   atual.setDate(atual.getDate() + quantidade);
@@ -48,12 +43,16 @@ function adicionarDias(data: string, quantidade: number) {
 }
 
 function criarDadosGrafico(
-  entradas: ReturnType<typeof usePainel>["dados"]["entradas"],
+  vendas: ReturnType<typeof usePainel>["dados"]["vendas"],
+  gastos: ReturnType<typeof usePainel>["dados"]["saidas"],
   dias: number
 ) {
-  if (entradas.length === 0) return [];
+  if (vendas.length === 0 && gastos.length === 0) return [];
 
-  const datas = entradas.map((entrada) => entrada.dataEntrada).sort();
+  const datas = [
+    ...vendas.map((venda) => venda.dataVenda),
+    ...gastos.map((gasto) => gasto.data),
+  ].sort();
   const dataFinal = datas[datas.length - 1];
   const dataInicial = adicionarDias(dataFinal, -(dias - 1));
   const linhas = [];
@@ -65,11 +64,12 @@ function criarDadosGrafico(
       label: formatarData(data),
     };
 
-    for (const status of STATUS) {
-      linha[status.id] = entradas.filter(
-        (entrada) => entrada.dataEntrada === data && entrada.status === status.id
-      ).length;
-    }
+    linha.vendas = vendas
+      .filter((venda) => venda.dataVenda === data)
+      .reduce((total, venda) => total + venda.valor, 0);
+    linha.gastos = gastos
+      .filter((gasto) => gasto.data === data)
+      .reduce((total, gasto) => total + gasto.valor, 0);
 
     linhas.push(linha);
   }
@@ -80,44 +80,21 @@ function criarDadosGrafico(
 export function DashboardOverview() {
   const { dados } = usePainel();
   const [periodo, setPeriodo] = React.useState(30);
-  const dadosGrafico = criarDadosGrafico(dados.entradas, periodo);
-  const contagemStatus = STATUS.map((status) => ({
-    ...status,
-    total: dados.entradas.filter((entrada) => entrada.status === status.id).length,
-  }));
+  const dadosGrafico = criarDadosGrafico(dados.vendas, dados.saidas, periodo);
 
   return (
     <div className="flex flex-col gap-6">
       <SummaryCards />
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {contagemStatus.map((status) => (
-          <Card key={status.id}>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle>{status.label}</CardTitle>
-                <Badge style={{ backgroundColor: `${status.color}20`, color: status.color }}>
-                  Status
-                </Badge>
-              </div>
-              <CardDescription className="text-3xl">{status.total}</CardDescription>
-            </CardHeader>
-            <CardContent className="text-xs text-muted-foreground">
-              pedido(s) nesta etapa
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
       <Card className="overflow-hidden">
         <CardHeader className="gap-4 border-b sm:flex-row sm:items-start sm:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
-              Evolução dos pedidos
+              Movimentação financeira
             </CardTitle>
             <CardDescription>
-              Entradas registradas por status no período selecionado
+              Valores de vendas e gastos no período selecionado
             </CardDescription>
           </div>
           <div className="grid grid-cols-3 rounded-md border bg-muted p-1 text-xs sm:flex">
@@ -141,19 +118,21 @@ export function DashboardOverview() {
         <CardContent className="p-3 pt-5 sm:p-6">
           {dadosGrafico.length === 0 ? (
             <div className="flex h-72 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
-              Cadastre uma entrada para visualizar o gráfico.
+              Registre uma venda ou gasto para visualizar o gráfico.
             </div>
           ) : (
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={dadosGrafico} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
                   <defs>
-                    {STATUS.map((status) => (
-                      <linearGradient key={status.id} id={`fill-${status.id}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={status.color} stopOpacity={0.35} />
-                        <stop offset="95%" stopColor={status.color} stopOpacity={0.02} />
-                      </linearGradient>
-                    ))}
+                    <linearGradient id="fill-vendas" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0.02} />
+                    </linearGradient>
+                    <linearGradient id="fill-gastos" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#dc2626" stopOpacity={0.28} />
+                      <stop offset="95%" stopColor="#dc2626" stopOpacity={0.02} />
+                    </linearGradient>
                   </defs>
                   <CartesianGrid vertical={false} stroke="currentColor" className="text-border" />
                   <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={10} minTickGap={24} />
@@ -163,20 +142,11 @@ export function DashboardOverview() {
                       const data = payload?.[0]?.payload?.data;
                       return typeof data === "string" ? formatarDataLonga(data) : "";
                     }}
+                    formatter={(valor) => typeof valor === "number" ? formatarMoeda(valor) : valor}
                     contentStyle={{ borderRadius: 8, border: "1px solid var(--border)", background: "var(--card)" }}
                   />
-                  {STATUS.map((status) => (
-                    <Area
-                      key={status.id}
-                      type="monotone"
-                      dataKey={status.id}
-                      name={status.label}
-                      stroke={status.color}
-                      strokeWidth={2}
-                      fill={`url(#fill-${status.id})`}
-                      stackId="1"
-                    />
-                  ))}
+                  <Area type="monotone" dataKey="vendas" name="Vendas" stroke="#2563eb" strokeWidth={2} fill="url(#fill-vendas)" />
+                  <Area type="monotone" dataKey="gastos" name="Gastos" stroke="#dc2626" strokeWidth={2} fill="url(#fill-gastos)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

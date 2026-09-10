@@ -28,7 +28,10 @@ import { usePainel } from "@/lib/painel-store";
 import { Entrada } from "@/lib/types";
 import { converterValorInput, formatarValorInput } from "@/lib/utils";
 
-type FormularioEntrada = Omit<Entrada, "id" | "criadoEm" | "atualizadoEm" | "observacoes">;
+type FormularioEntrada = Omit<
+  Entrada,
+  "id" | "criadoEm" | "atualizadoEm" | "observacoes"
+>;
 
 const entradaVazia: FormularioEntrada = {
   clienteNome: "",
@@ -70,7 +73,7 @@ export function EntradaFormDialog({
         setAbertoInterno(valor);
       }
     },
-    [controlado, onOpenChange]
+    [controlado, onOpenChange],
   );
   const [form, setForm] = React.useState<FormularioEntrada>(entradaVazia);
   const [valorTexto, setValorTexto] = React.useState("");
@@ -93,9 +96,11 @@ export function EntradaFormDialog({
               status: entradaExistente.status,
               valor: entradaExistente.valor,
             }
-          : entradaVazia
+          : entradaVazia,
       );
-          setValorTexto(entradaExistente ? formatarValorInput(entradaExistente.valor) : "");
+      setValorTexto(
+        entradaExistente ? formatarValorInput(entradaExistente.valor) : "",
+      );
       setErroDocumento(null);
     }
   }, [aberto, entradaExistente]);
@@ -144,7 +149,9 @@ export function EntradaFormDialog({
       )}
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{entradaExistente ? "Editar entrada" : "Nova entrada"}</DialogTitle>
+          <DialogTitle>
+            {entradaExistente ? "Editar entrada" : "Nova entrada"}
+          </DialogTitle>
           <DialogDescription>
             Cadastre os dados do pedido do cliente ou empresa.
           </DialogDescription>
@@ -159,7 +166,10 @@ export function EntradaFormDialog({
                 required
                 value={form.clienteNome}
                 onChange={(e) =>
-                  setForm((atual) => ({ ...atual, clienteNome: e.target.value }))
+                  setForm((atual) => ({
+                    ...atual,
+                    clienteNome: e.target.value,
+                  }))
                 }
                 placeholder="Ex: Maria Confecções LTDA"
               />
@@ -186,7 +196,9 @@ export function EntradaFormDialog({
                 id="produto"
                 required
                 value={form.produto}
-                onChange={(e) => setForm((atual) => ({ ...atual, produto: e.target.value }))}
+                onChange={(e) =>
+                  setForm((atual) => ({ ...atual, produto: e.target.value }))
+                }
                 placeholder="Ex: Camisa polo"
               />
             </div>
@@ -200,7 +212,10 @@ export function EntradaFormDialog({
                 required
                 value={form.quantidade}
                 onChange={(e) =>
-                  setForm((atual) => ({ ...atual, quantidade: Number(e.target.value) }))
+                  setForm((atual) => ({
+                    ...atual,
+                    quantidade: Number(e.target.value),
+                  }))
                 }
               />
             </div>
@@ -211,7 +226,9 @@ export function EntradaFormDialog({
                 id="tecido"
                 required
                 value={form.tecido}
-                onChange={(e) => setForm((atual) => ({ ...atual, tecido: e.target.value }))}
+                onChange={(e) =>
+                  setForm((atual) => ({ ...atual, tecido: e.target.value }))
+                }
                 placeholder="Ex: Piquet"
               />
             </div>
@@ -222,7 +239,9 @@ export function EntradaFormDialog({
                 id="modelo"
                 required
                 value={form.modelo}
-                onChange={(e) => setForm((atual) => ({ ...atual, modelo: e.target.value }))}
+                onChange={(e) =>
+                  setForm((atual) => ({ ...atual, modelo: e.target.value }))
+                }
                 placeholder="Ex: Slim"
               />
             </div>
@@ -232,7 +251,9 @@ export function EntradaFormDialog({
               <Input
                 id="placaGola"
                 value={form.placaGola}
-                onChange={(e) => setForm((atual) => ({ ...atual, placaGola: e.target.value }))}
+                onChange={(e) =>
+                  setForm((atual) => ({ ...atual, placaGola: e.target.value }))
+                }
                 placeholder="Ex: Bordada azul"
               />
             </div>
@@ -291,7 +312,9 @@ export function EntradaFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="falta_gabaritar">Falta gabaritar</SelectItem>
+                  <SelectItem value="falta_gabaritar">
+                    Falta gabaritar
+                  </SelectItem>
                   <SelectItem value="gabaritado">Gabaritado</SelectItem>
                   <SelectItem value="em_producao">Em produção</SelectItem>
                   <SelectItem value="finalizado">Finalizado</SelectItem>
@@ -301,10 +324,16 @@ export function EntradaFormDialog({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setAberto(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setAberto(false)}
+            >
               Cancelar
             </Button>
-            <Button type="submit">{entradaExistente ? "Salvar alterações" : "Cadastrar"}</Button>
+            <Button type="submit">
+              {entradaExistente ? "Salvar alterações" : "Cadastrar"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

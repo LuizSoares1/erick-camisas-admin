@@ -6,10 +6,12 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   LayoutDashboard,
+  WalletCards,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
   Shirt,
+  Package,
 } from "lucide-react";
 
 import {
@@ -24,17 +26,19 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 interface AppSidebarProps {
-  abaAtiva: "dashboard" | "entradas" | "saidas";
-  onMudarAba: (aba: "dashboard" | "entradas" | "saidas") => void;
+  abaAtiva: "inicio" | "dashboard" | "realizar-venda" | "entradas" | "saidas" | "produtos";
+  onMudarAba: (aba: "inicio" | "dashboard" | "realizar-venda" | "entradas" | "saidas" | "produtos") => void;
   nomeArquivo: string | null;
   recolhida: boolean;
   onAlternar: () => void;
 }
 
 const itens = [
-  { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard },
-  { id: "entradas" as const, label: "Entradas", icon: ArrowDownToLine },
-  { id: "saidas" as const, label: "Saídas", icon: ArrowUpFromLine },
+  { id: "inicio" as const, label: "Início", icon: LayoutDashboard },
+  { id: "dashboard" as const, label: "Financeiro", icon: WalletCards },
+  { id: "entradas" as const, label: "Vendas", icon: ArrowDownToLine },
+  { id: "saidas" as const, label: "Gastos", icon: ArrowUpFromLine },
+  { id: "produtos" as const, label: "Produtos", icon: Package },
 ];
 
 interface MobileSidebarProps {

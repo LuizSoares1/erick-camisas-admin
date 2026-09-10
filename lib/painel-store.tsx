@@ -5,7 +5,9 @@ import * as React from "react";
 import {
   Entrada,
   PainelData,
+  Produto,
   Saida,
+  Venda,
   StatusProducao,
   criarPainelVazio,
   PAINEL_DATA_VERSAO,
@@ -30,6 +32,12 @@ interface PainelContextValue {
   adicionarSaida: (saida: Omit<Saida, "id" | "criadoEm" | "atualizadoEm">) => void;
   atualizarSaida: (id: string, saida: Omit<Saida, "id" | "criadoEm" | "atualizadoEm">) => void;
   removerSaida: (id: string) => void;
+  adicionarProduto: (produto: Omit<Produto, "id" | "criadoEm" | "atualizadoEm">) => void;
+  atualizarProduto: (id: string, produto: Omit<Produto, "id" | "criadoEm" | "atualizadoEm">) => void;
+  removerProduto: (id: string) => void;
+  adicionarVenda: (venda: Omit<Venda, "id" | "numeroComprovante" | "criadoEm" | "atualizadoEm">) => Venda;
+  atualizarVenda: (id: string, venda: Omit<Venda, "id" | "criadoEm" | "atualizadoEm">) => void;
+  removerVenda: (id: string) => void;
   exportarJson: () => Promise<void>;
   importarJson: (arquivo: File) => Promise<void>;
   abrirEconectarArquivo: () => Promise<void>;
@@ -72,13 +80,19 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     try {
       const salvo = window.localStorage.getItem(CHAVE_PERSISTENCIA);
-      if (!salvo) return;
+      if (!salvo) {
+        setCarregado(true);
+        return;
+      }
 
       const estado = JSON.parse(salvo) as {
         dados?: unknown;
         nomeArquivo?: unknown;
       };
-      if (!validarPainelData(estado.dados)) return;
+      if (!validarPainelData(estado.dados)) {
+        setCarregado(true);
+        return;
+      }
 
       setDados({
         versao: estado.dados.versao ?? PAINEL_DATA_VERSAO,
@@ -89,6 +103,31 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
           status: migrarStatus(entrada.status),
         })),
         saidas: estado.dados.saidas,
+        produtos: Array.isArray(estado.dados.produtos) ? estado.dados.produtos : [],
+        vendas: Array.isArray(estado.dados.vendas)
+          ? estado.dados.vendas.map((venda) => ({
+              ...venda,
+              placaGola: venda.placaGola ?? "",
+              tamanho: venda.tamanho ?? "",
+            }))
+          : estado.dados.entradas.map((entrada) => ({
+              id: entrada.id,
+              numeroComprovante: entrada.id.slice(0, 8).toUpperCase(),
+              clienteNome: entrada.clienteNome,
+              documento: entrada.documento,
+              produto: entrada.produto,
+              tipo: entrada.modelo || "Não informado",
+              placaGola: entrada.placaGola ?? "",
+              tamanho: "",
+              quantidade: entrada.quantidade,
+              dataVenda: entrada.dataEntrada,
+              previsaoEntrega: entrada.previsaoEntrega,
+              formaPagamento: "Não informado",
+              valor: entrada.valor,
+              observacoes: entrada.observacoes ?? "",
+              criadoEm: entrada.criadoEm,
+              atualizadoEm: entrada.atualizadoEm,
+            })),
       });
       setCarregado(true);
       if (typeof estado.nomeArquivo === "string") {
@@ -96,6 +135,7 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
       }
     } catch {
       window.localStorage.removeItem(CHAVE_PERSISTENCIA);
+      setCarregado(true);
     }
   }, []);
 
@@ -180,6 +220,68 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  const adicionarProduto: PainelContextValue["adicionarProduto"] = (produto) => {
+    const agora = new Date().toISOString();
+    persistir((atual) => ({
+      ...atual,
+      produtos: [
+        ...atual.produtos,
+        { ...produto, id: gerarId(), criadoEm: agora, atualizadoEm: agora },
+      ],
+    }));
+  };
+
+  const atualizarProduto: PainelContextValue["atualizarProduto"] = (id, produto) => {
+    const agora = new Date().toISOString();
+    persistir((atual) => ({
+      ...atual,
+      produtos: atual.produtos.map((item) =>
+        item.id === id ? { ...item, ...produto, atualizadoEm: agora } : item
+      ),
+    }));
+  };
+
+  const removerProduto: PainelContextValue["removerProduto"] = (id) => {
+    persistir((atual) => ({
+      ...atual,
+      produtos: atual.produtos.filter((item) => item.id !== id),
+    }));
+  };
+
+  const adicionarVenda: PainelContextValue["adicionarVenda"] = (venda) => {
+    const agora = new Date().toISOString();
+    const id = gerarId();
+    const novaVenda: Venda = {
+      ...venda,
+      id,
+      numeroComprovante: id.slice(0, 8).toUpperCase(),
+      criadoEm: agora,
+      atualizadoEm: agora,
+    };
+    persistir((atual) => ({
+      ...atual,
+      vendas: [...atual.vendas, novaVenda],
+    }));
+    return novaVenda;
+  };
+
+  const atualizarVenda: PainelContextValue["atualizarVenda"] = (id, venda) => {
+    const agora = new Date().toISOString();
+    persistir((atual) => ({
+      ...atual,
+      vendas: atual.vendas.map((item) =>
+        item.id === id ? { ...item, ...venda, atualizadoEm: agora } : item
+      ),
+    }));
+  };
+
+  const removerVenda: PainelContextValue["removerVenda"] = (id) => {
+    persistir((atual) => ({
+      ...atual,
+      vendas: atual.vendas.filter((item) => item.id !== id),
+    }));
+  };
+
   const serializar = React.useCallback((): string => {
     const payload: PainelData = {
       ...dados,
@@ -230,6 +332,31 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
         status: migrarStatus(entrada.status),
       })),
       saidas: json.saidas,
+      produtos: Array.isArray(json.produtos) ? json.produtos : [],
+      vendas: Array.isArray(json.vendas)
+        ? json.vendas.map((venda) => ({
+            ...venda,
+            placaGola: venda.placaGola ?? "",
+            tamanho: venda.tamanho ?? "",
+          }))
+        : json.entradas.map((entrada) => ({
+            id: entrada.id,
+            numeroComprovante: entrada.id.slice(0, 8).toUpperCase(),
+            clienteNome: entrada.clienteNome,
+            documento: entrada.documento,
+            produto: entrada.produto,
+            tipo: entrada.modelo || "Não informado",
+            placaGola: entrada.placaGola ?? "",
+            tamanho: "",
+            quantidade: entrada.quantidade,
+            dataVenda: entrada.dataEntrada,
+            previsaoEntrega: entrada.previsaoEntrega,
+            formaPagamento: "Não informado",
+            valor: entrada.valor,
+            observacoes: entrada.observacoes ?? "",
+            criadoEm: entrada.criadoEm,
+            atualizadoEm: entrada.atualizadoEm,
+          })),
     });
     setCarregado(true);
     if (nome) setNomeArquivo(nome);
@@ -283,6 +410,12 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
     adicionarSaida,
     atualizarSaida,
     removerSaida,
+    adicionarProduto,
+    atualizarProduto,
+    removerProduto,
+    adicionarVenda,
+    atualizarVenda,
+    removerVenda,
     exportarJson,
     importarJson,
     abrirEconectarArquivo,

@@ -89,16 +89,16 @@ export function SaidaFormDialog({
           {trigger ?? (
             <Button size="sm">
               <Plus />
-              Nova saída
+              Registrar gasto
             </Button>
           )}
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{saidaExistente ? "Editar saída" : "Nova saída"}</DialogTitle>
+          <DialogTitle>{saidaExistente ? "Editar gasto" : "Registrar gasto"}</DialogTitle>
           <DialogDescription>
-            Registre um produto entregue e o valor recebido.
+            Registre o produto, a data e o valor do gasto.
           </DialogDescription>
         </DialogHeader>
 

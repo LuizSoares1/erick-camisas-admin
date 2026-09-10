@@ -80,7 +80,7 @@ export function SaidasTable() {
       <div className="flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed py-16 text-center">
         <p className="text-sm font-medium">Nenhuma saída cadastrada</p>
         <p className="text-xs text-muted-foreground">
-          Clique em &quot;Nova saída&quot; para registrar uma entrega.
+          Os gastos registrados aparecerão nesta lista.
         </p>
       </div>
     );

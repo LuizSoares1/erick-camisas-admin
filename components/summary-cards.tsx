@@ -12,24 +12,24 @@ function formatarMoeda(valor: number) {
 export function SummaryCards() {
   const { dados } = usePainel();
 
-  const totalEntradas = dados.entradas.reduce((acc, e) => acc + e.valor, 0);
+  const totalVendas = dados.vendas.reduce((acc, venda) => acc + venda.valor, 0);
   const totalSaidas = dados.saidas.reduce((acc, s) => acc + s.valor, 0);
-  const saldo = totalEntradas - totalSaidas;
+  const saldo = totalVendas - totalSaidas;
   const cards = [
     {
-      titulo: "Total em entradas",
-      valor: formatarMoeda(totalEntradas),
-      nota: `${dados.entradas.length} pedido(s) cadastrado(s)`,
+      titulo: "Total em vendas",
+      valor: formatarMoeda(totalVendas),
+      nota: `${dados.vendas.length} venda(s) cadastrada(s)`,
     },
     {
-      titulo: "Total em saídas",
+      titulo: "Total em gastos",
       valor: formatarMoeda(totalSaidas),
-      nota: `${dados.saidas.length} lançamento(s)`,
+      nota: `${dados.saidas.length} gasto(s) registrado(s)`,
     },
     {
       titulo: "Saldo",
       valor: formatarMoeda(saldo),
-      nota: saldo >= 0 ? "Entradas superam as saídas" : "Saídas superam as entradas",
+      nota: saldo >= 0 ? "Vendas superam as saídas" : "Saídas superam as vendas",
     },
   ];
 

@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Painel Administrativo",
-  description: "Controle de entradas e saídas de produção",
+  description: "Controle de vendas e saídas de produção",
 };
 
 export default function RootLayout({
