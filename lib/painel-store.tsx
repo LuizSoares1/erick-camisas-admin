@@ -109,6 +109,7 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
               ...venda,
               placaGola: venda.placaGola ?? "",
               tamanho: venda.tamanho ?? "",
+              status: migrarStatus(venda.status),
             }))
           : estado.dados.entradas.map((entrada) => ({
               id: entrada.id,
@@ -125,6 +126,7 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
               formaPagamento: "Não informado",
               valor: entrada.valor,
               observacoes: entrada.observacoes ?? "",
+              status: migrarStatus(entrada.status),
               criadoEm: entrada.criadoEm,
               atualizadoEm: entrada.atualizadoEm,
             })),
@@ -338,6 +340,7 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
             ...venda,
             placaGola: venda.placaGola ?? "",
             tamanho: venda.tamanho ?? "",
+            status: migrarStatus(venda.status),
           }))
         : json.entradas.map((entrada) => ({
             id: entrada.id,
@@ -354,6 +357,7 @@ export function PainelProvider({ children }: { children: React.ReactNode }) {
             formaPagamento: "Não informado",
             valor: entrada.valor,
             observacoes: entrada.observacoes ?? "",
+            status: migrarStatus(entrada.status),
             criadoEm: entrada.criadoEm,
             atualizadoEm: entrada.atualizadoEm,
           })),

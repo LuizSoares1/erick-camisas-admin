@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, FileText, ShoppingCart } from "lucide-react";
+import { CheckCircle2, FileText, Pencil, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +25,7 @@ import {
 import { abrirComprovante } from "@/lib/comprovante";
 import { mascararCpfCnpj, validarCpfOuCnpj } from "@/lib/cpf-cnpj";
 import { usePainel } from "@/lib/painel-store";
-import { Venda } from "@/lib/types";
+import { Venda, VendaItem } from "@/lib/types";
 
 interface RealizarVendaProps {
   open: boolean;
@@ -41,10 +41,15 @@ const vendaInicial = {
   quantidade: 1,
   previsaoEntrega: "",
   formaPagamento: "pix",
+  status: "falta_gabaritar",
 };
 
 function moeda(valor: number) {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function criarIdItem() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
@@ -53,8 +58,11 @@ export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
   const [etapa, setEtapa] = React.useState<1 | 2>(1);
   const [erro, setErro] = React.useState<string | null>(null);
   const [vendaFinalizada, setVendaFinalizada] = React.useState<Venda | null>(null);
+  const [itens, setItens] = React.useState<(VendaItem & { id: string })[]>([]);
+  const [itemEditandoId, setItemEditandoId] = React.useState<string | null>(null);
   const produtoSelecionado = dados.produtos.find((produto) => produto.codigo === form.codigoProduto.trim());
   const valorFinal = produtoSelecionado ? produtoSelecionado.valor * form.quantidade : 0;
+  const valorCarrinho = itens.reduce((total, item) => total + item.valorTotal, 0);
 
   const atualizar = (campo: keyof typeof vendaInicial, valor: string | number) => {
     setForm((atual) => ({ ...atual, [campo]: valor }));
@@ -63,8 +71,8 @@ export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
 
   const finalizarVenda = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!produtoSelecionado) {
-      setErro("Informe o código de um produto cadastrado.");
+    if (itens.length === 0) {
+      setErro("Adicione pelo menos um produto à venda.");
       return;
     }
     if (form.documento.trim()) {
@@ -78,28 +86,26 @@ export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
     const venda = adicionarVenda({
       clienteNome: form.clienteNome,
       documento: form.documento,
-      produto: produtoSelecionado.nome,
-      tipo: produtoSelecionado.tipo,
-      placaGola: form.placaGola,
-      tamanho: form.tamanho,
-      quantidade: form.quantidade,
+      produto: itens[0].produto,
+      tipo: itens[0].tipo,
+      placaGola: itens[0].placaGola,
+      tamanho: itens[0].tamanho,
+      quantidade: itens.reduce((total, item) => total + item.quantidade, 0),
       dataVenda: new Date().toISOString().slice(0, 10),
       previsaoEntrega: form.previsaoEntrega,
       formaPagamento: form.formaPagamento,
-      valor: valorFinal,
+      valor: valorCarrinho,
       observacoes: "",
+      status: "falta_gabaritar",
+      itens: itens.map(({ id, ...item }) => item),
     });
     setVendaFinalizada(venda);
     onOpenChange(false);
   };
 
   const avancarParaCliente = () => {
-    if (!produtoSelecionado) {
-      setErro("Informe o código de um produto cadastrado.");
-      return;
-    }
-    if (!form.quantidade || form.quantidade < 1) {
-      setErro("Informe uma quantidade válida.");
+    if (itens.length === 0) {
+      setErro("Adicione pelo menos um produto à venda.");
       return;
     }
     if (!form.previsaoEntrega) {
@@ -110,9 +116,59 @@ export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
     setEtapa(2);
   };
 
+  const adicionarItem = () => {
+    if (!produtoSelecionado) {
+      setErro("Informe o código de um produto cadastrado.");
+      return;
+    }
+    if (!form.quantidade || form.quantidade < 1) {
+      setErro("Informe uma quantidade válida.");
+      return;
+    }
+    if (!form.tamanho.trim()) {
+      setErro("Informe o tamanho do produto.");
+      return;
+    }
+    const item = {
+      codigoProduto: produtoSelecionado.codigo,
+      produto: produtoSelecionado.nome,
+      tipo: produtoSelecionado.tipo,
+      placaGola: form.placaGola,
+      tamanho: form.tamanho,
+      quantidade: form.quantidade,
+      valorUnitario: produtoSelecionado.valor,
+      valorTotal: valorFinal,
+    };
+    setItens((atuais) => itemEditandoId
+      ? atuais.map((atual) => atual.id === itemEditandoId ? { ...item, id: atual.id } : atual)
+      : [...atuais, { ...item, id: criarIdItem() }]);
+    setItemEditandoId(null);
+    limparFormularioProduto();
+    setErro(null);
+  };
+
+  const limparFormularioProduto = () => {
+    setForm((atual) => ({ ...atual, codigoProduto: "", placaGola: "", tamanho: "", quantidade: 1 }));
+    setItemEditandoId(null);
+  };
+
+  const editarItem = (item: VendaItem & { id: string }) => {
+    setForm((atual) => ({
+      ...atual,
+      codigoProduto: item.codigoProduto,
+      placaGola: item.placaGola,
+      tamanho: item.tamanho,
+      quantidade: item.quantidade,
+    }));
+    setItemEditandoId(item.id);
+    setErro(null);
+  };
+
   const reiniciar = () => {
     setVendaFinalizada(null);
     setForm(vendaInicial);
+    setItens([]);
+    setItemEditandoId(null);
     setEtapa(1);
     setErro(null);
   };
@@ -156,14 +212,19 @@ export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
             <div className="grid gap-1.5"><Label htmlFor="tamanhoVenda">Tamanho</Label><Input id="tamanhoVenda" required value={form.tamanho} onChange={(event) => atualizar("tamanho", event.target.value)} placeholder="Ex: M, G ou GG" /></div>
             <div className="grid gap-1.5"><Label htmlFor="quantidadeVendaNova">Quantidade</Label><Input id="quantidadeVendaNova" type="number" min={1} required value={form.quantidade} onChange={(event) => atualizar("quantidade", Number(event.target.value))} /></div>
             <div className="grid gap-1.5"><Label htmlFor="previsaoEntregaVenda">Previsão de Entrega</Label><DatePicker id="previsaoEntregaVenda" required value={form.previsaoEntrega} onChange={(valor) => atualizar("previsaoEntrega", valor)} /></div>
-            <div className="grid gap-1.5 lg:col-span-3"><Label htmlFor="valorCarregado">Valor final</Label><Input id="valorCarregado" value={produtoSelecionado ? moeda(valorFinal) : ""} readOnly placeholder="Aguardando produto e quantidade" /></div>
+            <div className="grid gap-1.5 lg:col-span-3"><Label htmlFor="valorCarregado">Valor do item</Label><Input id="valorCarregado" value={produtoSelecionado ? moeda(valorFinal) : ""} readOnly placeholder="Aguardando produto e quantidade" /></div>
           </div>
-          <div className="mt-6 flex justify-end">
+          <div className="mt-5 flex justify-between gap-3">
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={adicionarItem}>{itemEditandoId ? <Pencil /> : <Plus />}{itemEditandoId ? "Salvar produto" : "Adicionar produto"}</Button>
+              {itemEditandoId && <Button type="button" variant="ghost" onClick={limparFormularioProduto}><X />Cancelar</Button>}
+            </div>
             <Button type="button" size="lg" onClick={avancarParaCliente}>Próximo</Button>
           </div>
+          {itens.length > 0 && <div className="mt-5 overflow-hidden rounded-md border"><div className="border-b bg-muted/40 px-4 py-3 text-sm font-semibold">Produtos da venda</div><div className="divide-y">{itens.map((item) => <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm"><div className="min-w-0"><p className="truncate font-medium">{item.produto} <span className="font-normal text-muted-foreground">({item.tamanho})</span></p><p className="text-xs text-muted-foreground">{item.codigoProduto} · {item.quantidade} unidade(s) · {moeda(item.valorUnitario)} cada</p></div><div className="flex items-center gap-2"><span className="font-medium">{moeda(item.valorTotal)}</span><Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${item.produto}`} onClick={() => editarItem(item)}><Pencil /></Button><Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label={`Remover ${item.produto}`} onClick={() => { if (itemEditandoId === item.id) limparFormularioProduto(); setItens((atuais) => atuais.filter((atual) => atual.id !== item.id)); }}><Trash2 /></Button></div></div>)}</div><div className="flex justify-between border-t px-4 py-3 text-sm font-semibold"><span>Total da venda</span><span>{moeda(valorCarrinho)}</span></div></div>}
         </section> : <section className="rounded-lg border bg-card p-5">
           <div className="mb-5"><p className="text-sm font-semibold">2. Cliente e pagamento</p><p className="text-sm text-muted-foreground">Informe quem está realizando a compra e como ela será paga.</p></div>
-          <div className="mb-5 rounded-md bg-muted/50 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-xs text-muted-foreground">Venda</p><p className="font-medium">{produtoSelecionado?.nome} · {form.quantidade} unidade(s)</p></div><div className="text-right"><p className="text-xs text-muted-foreground">Valor final</p><p className="text-lg font-semibold">{moeda(valorFinal)}</p></div></div></div>
+          <div className="mb-5 rounded-md bg-muted/50 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-xs text-muted-foreground">Venda</p><p className="font-medium">{itens.length} produto(s) · {itens.reduce((total, item) => total + item.quantidade, 0)} unidade(s)</p></div><div className="text-right"><p className="text-xs text-muted-foreground">Valor final</p><p className="text-lg font-semibold">{moeda(valorCarrinho)}</p></div></div></div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5"><Label htmlFor="clienteVendaNova">Nome do Cliente/Empresa</Label><Input id="clienteVendaNova" required value={form.clienteNome} onChange={(event) => atualizar("clienteNome", event.target.value)} /></div>
             <div className="grid gap-1.5"><Label htmlFor="documentoVendaNova">CPF/CNPJ (opcional)</Label><Input id="documentoVendaNova" inputMode="numeric" value={form.documento} onChange={(event) => atualizar("documento", mascararCpfCnpj(event.target.value))} placeholder="000.000.000-00" /></div>

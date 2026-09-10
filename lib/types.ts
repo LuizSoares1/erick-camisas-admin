@@ -39,8 +39,21 @@ export interface Venda {
   formaPagamento: string;
   valor: number;
   observacoes: string;
+  status?: StatusProducao;
+  itens?: VendaItem[];
   criadoEm: string;
   atualizadoEm: string;
+}
+
+export interface VendaItem {
+  codigoProduto: string;
+  produto: string;
+  tipo: string;
+  placaGola: string;
+  tamanho: string;
+  quantidade: number;
+  valorUnitario: number;
+  valorTotal: number;
 }
 
 export interface Saida {

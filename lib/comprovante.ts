@@ -39,6 +39,17 @@ export function abrirComprovante(registro: Venda | Entrada) {
         criadoEm: registro.criadoEm,
         atualizadoEm: registro.atualizadoEm,
       };
+  const itens = venda.itens?.length ? venda.itens : [{
+    codigoProduto: "",
+    produto: venda.produto,
+    tipo: venda.tipo,
+    placaGola: venda.placaGola,
+    tamanho: venda.tamanho,
+    quantidade: venda.quantidade,
+    valorUnitario: venda.quantidade ? venda.valor / venda.quantidade : venda.valor,
+    valorTotal: venda.valor,
+  }];
+  const totalQuantidade = itens.reduce((total, item) => total + item.quantidade, 0);
   const janela = window.open("", "_blank", "width=760,height=900");
   if (!janela) {
     window.alert("Não foi possível abrir o comprovante. Permita pop-ups para este site.");
@@ -66,8 +77,8 @@ export function abrirComprovante(registro: Venda | Entrada) {
       dd { margin: 4px 0 0; overflow-wrap: anywhere; }
       .pedido { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 12px; border-bottom: 1px dashed #111; padding-bottom: 12px; }
       .pedido strong { font-weight: 700; }
-      .pedido span:nth-child(5) { text-align: right; }
-      .pedido span:nth-child(6) { text-align: right; }
+      .pedido .quantidade,
+      .pedido .valor { text-align: right; white-space: nowrap; }
       .entrega { margin-top: 10px; display: flex; justify-content: space-between; gap: 16px; }
       .total { display: flex; justify-content: space-between; border-top: 1px solid #111; margin-top: 18px; padding-top: 12px; font-size: 16px; font-weight: 700; }
       footer { margin-top: 34px; display: flex; justify-content: space-between; gap: 20px; text-align: center; font-size: 11px; }
@@ -91,15 +102,12 @@ export function abrirComprovante(registro: Venda | Entrada) {
       </dl></section>
       <section><h2>DADOS DO PEDIDO:</h2>
         <div class="pedido"><strong>Produto</strong><strong>Qtd.</strong><strong>Valor</strong>
-          <span>${escaparHtml(venda.produto)}${venda.tipo ? ` - ${escaparHtml(venda.tipo)}` : ""} ${venda.tamanho ? `(${escaparHtml(venda.tamanho)})` : ""}</span>
-          <span>${venda.quantidade}</span><span>${formatarMoeda(venda.valor)}</span>
-          <span>Placa de gola: ${escaparHtml(venda.placaGola || "Não informado")}</span>
-          <span></span><span></span>
+          ${itens.map((item) => `<span>${escaparHtml(item.produto)}${item.tipo ? ` - ${escaparHtml(item.tipo)}` : ""} ${item.tamanho ? `(${escaparHtml(item.tamanho)})` : ""}<br><small>Placa de gola: ${escaparHtml(item.placaGola || "Não informado")}</small></span><span class="quantidade">${item.quantidade}</span><span class="valor">${formatarMoeda(item.valorTotal)}</span>`).join("")}
         </div>
         <div class="entrega"><strong>Previsão de entrega</strong><span>${formatarData(venda.previsaoEntrega)}</span></div>
       </section>
       <section><h2>DADOS DE PAGAMENTO:</h2><dl>
-        <div><dt>Total de quantidades</dt><dd>${venda.quantidade}</dd></div>
+        <div><dt>Total de quantidades</dt><dd>${totalQuantidade}</dd></div>
         <div><dt>Valor dos produtos</dt><dd>${formatarMoeda(venda.valor)}</dd></div>
         <div><dt>Valor do pedido</dt><dd>${formatarMoeda(venda.valor)}</dd></div>
         <div><dt>Pagamento</dt><dd>${escaparHtml(venda.formaPagamento)}</dd></div>
