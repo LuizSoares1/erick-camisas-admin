@@ -108,7 +108,7 @@ export function abrirComprovante(registro: Venda | Entrada) {
       </section>
       <section><h2>DADOS DE PAGAMENTO:</h2><dl>
         <div><dt>Total de quantidades</dt><dd>${totalQuantidade}</dd></div>
-        <div><dt>Valor dos produtos</dt><dd>${formatarMoeda(venda.valor)}</dd></div>
+        <div><dt>Valor dos produtos</dt><dd>${formatarMoeda(venda.subtotal ?? venda.valor)}</dd></div>
         <div><dt>Valor do pedido</dt><dd>${formatarMoeda(venda.valor)}</dd></div>
         <div><dt>Pagamento</dt><dd>${escaparHtml(venda.formaPagamento)}</dd></div>
       </dl></section>

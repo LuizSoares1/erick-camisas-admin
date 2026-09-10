@@ -37,6 +37,7 @@ export interface Venda {
   dataVenda: string;
   previsaoEntrega: string;
   formaPagamento: string;
+  subtotal?: number;
   valor: number;
   observacoes: string;
   status?: StatusProducao;

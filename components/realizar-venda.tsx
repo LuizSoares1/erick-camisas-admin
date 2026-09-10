@@ -41,6 +41,7 @@ const vendaInicial = {
   quantidade: 1,
   previsaoEntrega: "",
   formaPagamento: "pix",
+  observacoes: "",
   status: "falta_gabaritar",
 };
 
@@ -60,9 +61,13 @@ export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
   const [vendaFinalizada, setVendaFinalizada] = React.useState<Venda | null>(null);
   const [itens, setItens] = React.useState<(VendaItem & { id: string })[]>([]);
   const [itemEditandoId, setItemEditandoId] = React.useState<string | null>(null);
+  const [valorTotalEditado, setValorTotalEditado] = React.useState<string | null>(null);
   const produtoSelecionado = dados.produtos.find((produto) => produto.codigo === form.codigoProduto.trim());
   const valorFinal = produtoSelecionado ? produtoSelecionado.valor * form.quantidade : 0;
-  const valorCarrinho = itens.reduce((total, item) => total + item.valorTotal, 0);
+  const subtotal = itens.reduce((total, item) => total + item.valorTotal, 0);
+  const valorTotal = valorTotalEditado === null
+    ? subtotal
+    : Number(valorTotalEditado.replace(/\./g, "").replace(",", "."));
 
   const atualizar = (campo: keyof typeof vendaInicial, valor: string | number) => {
     setForm((atual) => ({ ...atual, [campo]: valor }));
@@ -82,6 +87,10 @@ export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
         return;
       }
     }
+    if (!Number.isFinite(valorTotal) || valorTotal < 0) {
+      setErro("Informe um valor total válido.");
+      return;
+    }
 
     const venda = adicionarVenda({
       clienteNome: form.clienteNome,
@@ -94,8 +103,9 @@ export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
       dataVenda: new Date().toISOString().slice(0, 10),
       previsaoEntrega: form.previsaoEntrega,
       formaPagamento: form.formaPagamento,
-      valor: valorCarrinho,
-      observacoes: "",
+      subtotal,
+      valor: valorTotal,
+      observacoes: form.observacoes,
       status: "falta_gabaritar",
       itens: itens.map(({ id, ...item }) => item),
     });
@@ -142,6 +152,7 @@ export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
     setItens((atuais) => itemEditandoId
       ? atuais.map((atual) => atual.id === itemEditandoId ? { ...item, id: atual.id } : atual)
       : [...atuais, { ...item, id: criarIdItem() }]);
+    setValorTotalEditado(null);
     setItemEditandoId(null);
     limparFormularioProduto();
     setErro(null);
@@ -169,6 +180,7 @@ export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
     setForm(vendaInicial);
     setItens([]);
     setItemEditandoId(null);
+    setValorTotalEditado(null);
     setEtapa(1);
     setErro(null);
   };
@@ -221,14 +233,16 @@ export function RealizarVenda({ open, onOpenChange }: RealizarVendaProps) {
             </div>
             <Button type="button" size="lg" onClick={avancarParaCliente}>Próximo</Button>
           </div>
-          {itens.length > 0 && <div className="mt-5 overflow-hidden rounded-md border"><div className="border-b bg-muted/40 px-4 py-3 text-sm font-semibold">Produtos da venda</div><div className="divide-y">{itens.map((item) => <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm"><div className="min-w-0"><p className="truncate font-medium">{item.produto} <span className="font-normal text-muted-foreground">({item.tamanho})</span></p><p className="text-xs text-muted-foreground">{item.codigoProduto} · {item.quantidade} unidade(s) · {moeda(item.valorUnitario)} cada</p></div><div className="flex items-center gap-2"><span className="font-medium">{moeda(item.valorTotal)}</span><Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${item.produto}`} onClick={() => editarItem(item)}><Pencil /></Button><Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label={`Remover ${item.produto}`} onClick={() => { if (itemEditandoId === item.id) limparFormularioProduto(); setItens((atuais) => atuais.filter((atual) => atual.id !== item.id)); }}><Trash2 /></Button></div></div>)}</div><div className="flex justify-between border-t px-4 py-3 text-sm font-semibold"><span>Total da venda</span><span>{moeda(valorCarrinho)}</span></div></div>}
+          {itens.length > 0 && <div className="mt-5 overflow-hidden rounded-md border"><div className="border-b bg-muted/40 px-4 py-3 text-sm font-semibold">Produtos da venda</div><div className="divide-y">{itens.map((item) => <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm"><div className="min-w-0"><p className="truncate font-medium">{item.produto} <span className="font-normal text-muted-foreground">({item.tamanho})</span></p><p className="text-xs text-muted-foreground">{item.codigoProduto} · {item.quantidade} unidade(s) · {moeda(item.valorUnitario)} cada</p></div><div className="flex items-center gap-2"><span className="font-medium">{moeda(item.valorTotal)}</span><Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label={`Editar ${item.produto}`} onClick={() => editarItem(item)}><Pencil /></Button><Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label={`Remover ${item.produto}`} onClick={() => { if (itemEditandoId === item.id) limparFormularioProduto(); setItens((atuais) => atuais.filter((atual) => atual.id !== item.id)); setValorTotalEditado(null); }}><Trash2 /></Button></div></div>)}</div><div className="flex justify-between border-t px-4 py-3 text-sm font-semibold"><span>Subtotal</span><span>{moeda(subtotal)}</span></div></div>}
         </section> : <section className="rounded-lg border bg-card p-5">
           <div className="mb-5"><p className="text-sm font-semibold">2. Cliente e pagamento</p><p className="text-sm text-muted-foreground">Informe quem está realizando a compra e como ela será paga.</p></div>
-          <div className="mb-5 rounded-md bg-muted/50 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-xs text-muted-foreground">Venda</p><p className="font-medium">{itens.length} produto(s) · {itens.reduce((total, item) => total + item.quantidade, 0)} unidade(s)</p></div><div className="text-right"><p className="text-xs text-muted-foreground">Valor final</p><p className="text-lg font-semibold">{moeda(valorCarrinho)}</p></div></div></div>
+          <div className="mb-5 rounded-md bg-muted/50 p-4"><div className="flex items-center justify-between gap-4"><div><p className="text-xs text-muted-foreground">Venda</p><p className="font-medium">{itens.length} produto(s) · {itens.reduce((total, item) => total + item.quantidade, 0)} unidade(s)</p></div><div className="grid gap-1.5 text-right"><Label htmlFor="subtotalVendaNova" className="text-xs text-muted-foreground">Subtotal</Label><p id="subtotalVendaNova" className="text-lg font-semibold">{moeda(subtotal)}</p></div></div></div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-1.5"><Label htmlFor="clienteVendaNova">Nome do Cliente/Empresa</Label><Input id="clienteVendaNova" required value={form.clienteNome} onChange={(event) => atualizar("clienteNome", event.target.value)} /></div>
             <div className="grid gap-1.5"><Label htmlFor="documentoVendaNova">CPF/CNPJ (opcional)</Label><Input id="documentoVendaNova" inputMode="numeric" value={form.documento} onChange={(event) => atualizar("documento", mascararCpfCnpj(event.target.value))} placeholder="000.000.000-00" /></div>
             <div className="grid gap-1.5 sm:max-w-xs"><Label htmlFor="pagamentoVendaNova">Forma de pagamento</Label><Select value={form.formaPagamento} onValueChange={(valor) => atualizar("formaPagamento", valor)}><SelectTrigger id="pagamentoVendaNova"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="credito">Cartão</SelectItem><SelectItem value="pix">PIX</SelectItem><SelectItem value="dinheiro">Dinheiro</SelectItem></SelectContent></Select></div>
+            <div className="grid gap-1.5 sm:max-w-xs"><Label htmlFor="valorTotalVendaNova">Valor total</Label><Input id="valorTotalVendaNova" type="text" inputMode="decimal" required value={valorTotalEditado ?? subtotal.toFixed(2).replace(".", ",")} onChange={(event) => setValorTotalEditado(event.target.value.replace(/[^\d,.]/g, ""))} /></div>
+            <div className="grid gap-1.5 sm:col-span-2"><Label htmlFor="observacoesVendaNova">Observação</Label><textarea id="observacoesVendaNova" value={form.observacoes} onChange={(event) => atualizar("observacoes", event.target.value)} rows={4} placeholder="Adicione uma observação para esta venda" className="flex w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/50" /></div>
           </div>
           <div className="mt-6 flex justify-between gap-2"><Button type="button" variant="outline" onClick={() => { setErro(null); setEtapa(1); }}>Voltar</Button><Button type="submit" size="lg">Finalizar Venda</Button></div>
         </section>}
